@@ -24,6 +24,12 @@ Set your API key (optional if you do not use AI analysis):
 set GEMINI_API_KEY=YOUR_KEY
 ```
 
+You can also place the key in `.env`:
+
+```
+GEMINI_API_KEY=YOUR_KEY
+```
+
 ## Run
 
 ```bash

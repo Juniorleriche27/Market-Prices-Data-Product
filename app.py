@@ -10,6 +10,7 @@ import pandas as pd
 import streamlit as st
 import google.generativeai as genai
 from google.api_core.exceptions import TooManyRequests
+from dotenv import load_dotenv
 
 # =========================================================
 # CONFIGURATION PAGE
@@ -34,6 +35,7 @@ st.markdown(
 # =========================================================
 
 # In production: use st.secrets or environment variables
+load_dotenv()
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY", "YOUR_API_KEY"))
 model = genai.GenerativeModel("models/gemini-2.5-flash")
