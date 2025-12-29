@@ -286,26 +286,31 @@ st.subheader("AI-powered Economic Analysis")
 
 if st.button("Generate AI Analysis"):
     with st.spinner("Analyzing prices..."):
-        summary = df_product.groupby("product")["price"].mean().reset_index()
+        if df_view.empty:
+            st.warning("No data after filters. Adjust filters and try again.")
+            summary = None
+        else:
+            summary = df_view.groupby("product")["price"].mean().reset_index()
 
-        prompt = f"""
-        Tu es un expert en economie et data science.
-        Analyse les prix moyens suivants et fournis :
-        1. Resume des tendances
-        2. Observation cle
-        3. Recommandation economique
+        if summary is not None:
+            prompt = f"""
+            Tu es un expert en economie et data science.
+            Analyse les prix moyens suivants et fournis :
+            1. Resume des tendances
+            2. Observation cle
+            3. Recommandation economique
 
-        Donnees :
-        {summary.to_string(index=False)}
-        """
+            Donnees (apres filtres) :
+            {summary.to_string(index=False)}
+            """
 
-        try:
-            response = model.generate_content(prompt)
-            st.success("Analysis generated")
-            st.markdown(response.text)
+            try:
+                response = model.generate_content(prompt)
+                st.success("Analysis generated")
+                st.markdown(response.text)
 
-            with open("docs/ai_analysis_report.txt", "w", encoding="utf-8") as f:
-                f.write(response.text)
+                with open("docs/ai_analysis_report.txt", "w", encoding="utf-8") as f:
+                    f.write(response.text)
 
-        except TooManyRequests:
-            st.error("Quota API atteint. Reessayez plus tard.")
+            except TooManyRequests:
+                st.error("Quota API atteint. Reessayez plus tard.")
