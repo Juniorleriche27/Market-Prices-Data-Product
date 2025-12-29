@@ -150,6 +150,21 @@ df_product = df_clean.copy()
 df_product["ingestion_date"] = datetime.now()
 df_product.to_csv("data/product/market_prices_daily.csv", index=False)
 
+# Add simple product categories for filtering (MVP)
+category_map = {
+    "ble": "cereals",
+    "riz": "cereals",
+    "wheat": "cereals",
+    "huile": "oils",
+    "sucre": "sweeteners",
+    "lait": "dairy",
+    "oeufs": "protein",
+    "poisson": "protein",
+    "haricots": "legumes",
+    "tomates": "vegetables",
+}
+df_product["category"] = df_product["product"].map(category_map).fillna("other")
+
 metrics = compute_quality_metrics(df_product)
 
 # =========================================================
@@ -158,28 +173,102 @@ metrics = compute_quality_metrics(df_product)
 
 st.sidebar.header("Filters")
 
-country_filter = st.sidebar.selectbox(
-    "Country",
-    [""] + sorted(df_product["country"].unique())
-)
-
-product_filter = st.sidebar.selectbox(
-    "Product",
-    [""] + sorted(df_product["product"].unique())
-)
-
-
 df_view = df_product.copy()
-if country_filter:
-    df_view = df_view[df_view["country"] == country_filter]
-if product_filter:
-    df_view = df_view[df_view["product"] == product_filter]
+
+# Date range filter
+min_date = df_view["date"].min().date()
+max_date = df_view["date"].max().date()
+date_range = st.sidebar.date_input(
+    "Date range",
+    value=(min_date, max_date),
+    min_value=min_date,
+    max_value=max_date
+)
+if isinstance(date_range, tuple) and len(date_range) == 2:
+    start_date, end_date = date_range
+else:
+    start_date = end_date = date_range
+df_view = df_view[
+    (df_view["date"].dt.date >= start_date) &
+    (df_view["date"].dt.date <= end_date)
+]
+
+# Country -> City -> Market (hierarchical filters)
+countries = sorted(df_view["country"].dropna().unique())
+selected_countries = st.sidebar.multiselect("Country", countries, default=countries)
+if selected_countries:
+    df_view = df_view[df_view["country"].isin(selected_countries)]
+
+cities = sorted(df_view["city"].dropna().unique())
+selected_cities = st.sidebar.multiselect("City", cities, default=cities)
+if selected_cities:
+    df_view = df_view[df_view["city"].isin(selected_cities)]
+
+markets = sorted(df_view["market"].dropna().unique())
+selected_markets = st.sidebar.multiselect("Market", markets, default=markets)
+if selected_markets:
+    df_view = df_view[df_view["market"].isin(selected_markets)]
+
+# Product filters
+categories = sorted(df_view["category"].dropna().unique())
+selected_categories = st.sidebar.multiselect("Category", categories, default=categories)
+if selected_categories:
+    df_view = df_view[df_view["category"].isin(selected_categories)]
+
+products = sorted(df_view["product"].dropna().unique())
+selected_products = st.sidebar.multiselect("Product", products, default=products)
+if selected_products:
+    df_view = df_view[df_view["product"].isin(selected_products)]
+
+# Unit, currency, source, collector
+units = sorted(df_view["unit"].dropna().unique())
+selected_units = st.sidebar.multiselect("Unit", units, default=units)
+if selected_units:
+    df_view = df_view[df_view["unit"].isin(selected_units)]
+
+currencies = sorted(df_view["currency"].dropna().unique())
+selected_currencies = st.sidebar.multiselect("Currency", currencies, default=currencies)
+if selected_currencies:
+    df_view = df_view[df_view["currency"].isin(selected_currencies)]
+
+sources = sorted(df_view["source"].dropna().unique())
+selected_sources = st.sidebar.multiselect("Source", sources, default=sources)
+if selected_sources:
+    df_view = df_view[df_view["source"].isin(selected_sources)]
+
+collectors = sorted(df_view["collected_by"].dropna().unique())
+selected_collectors = st.sidebar.multiselect("Collected by", collectors, default=collectors)
+if selected_collectors:
+    df_view = df_view[df_view["collected_by"].isin(selected_collectors)]
+
+# Price range and quality filters
+if not df_view.empty:
+    min_price = float(df_view["price"].min())
+    max_price = float(df_view["price"].max())
+else:
+    min_price, max_price = 0.0, 0.0
+
+price_range = st.sidebar.slider(
+    "Price range",
+    min_value=min_price,
+    max_value=max_price,
+    value=(min_price, max_price)
+)
+df_view = df_view[
+    (df_view["price"] >= price_range[0]) &
+    (df_view["price"] <= price_range[1])
+]
+
+exclude_anomalies = st.sidebar.checkbox("Exclude price <= 0", value=True)
+if exclude_anomalies:
+    df_view = df_view[df_view["price"] > 0]
 
 # =========================================================
 # AFFICHAGE DONNEES
 # =========================================================
 
 st.subheader("Market Prices Data")
+st.caption(f"{len(df_view)} rows")
 st.dataframe(df_view, use_container_width=True)
 
 # =========================================================
