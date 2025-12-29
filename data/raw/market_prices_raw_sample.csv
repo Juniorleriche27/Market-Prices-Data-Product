@@ -1,0 +1,4 @@
+date,country,city,market,product,price,unit,currency,source,collected_by
+2025-12-01,benin,cotonou,market_1,riz,450.0,kg,XOF,field survey,agent_1
+2025-12-01,ghana,accra,market_2,huile,720.0,litre,GHS,field survey,agent_2
+2025-12-02,togo,lome,market_3,oeufs,300.0,douzaine,XOF,field survey,agent_3

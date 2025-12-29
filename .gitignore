@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.env.*
+
+# Streamlit
+.streamlit/
+
+# Generated files
+logs/
+docs/ai_analysis_report.txt
+data/raw/market_prices_raw.csv
+data/clean/market_prices_clean.csv
+data/product/market_prices_daily.csv
